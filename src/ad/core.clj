@@ -166,7 +166,7 @@
          (fn [x1 x2] (ddiv x2))
          (fn [x1 x2] (d- (ddiv x1 (d* x2 x2))))))
 
-(def dsqrt (lift-real->real #(Math/sqrt %) (fn [x] (ddiv (d* 2 (dsqrt x))))))
+(def dsqrt (lift-real->real #(Math/sqrt %) (fn [x] (ddiv 1 (d* 2 (dsqrt x))))))
 
 (def dexp (lift-real->real #(Math/exp %) (fn [x] (dexp x))))
 
@@ -180,6 +180,8 @@
 (def dsin (lift-real->real #(Math/sin %) (fn [x] (dcos x))))
 
 (def dcos (lift-real->real #(Math/cos %) (fn [x] (d- (dsin x)))))
+
+(def dtan (lift-real->real #(Math/tan %) (fn [x] (d+ 1 (dexpt (dtan x) 2)))))
 
 (def datan (lift-real->real #(Math/atan %) (fn [x] (ddiv 1 (d+ 1 (d* x x))))))
 

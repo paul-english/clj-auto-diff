@@ -2,7 +2,7 @@
   (:use midje.sweet)
   (:require [ad.core :refer :all]))
 
-(facts "derivatives"
+(facts "Basic derivatives"
 
   ;; f(x) = x^2
   ;; f'(x)= 2*x
@@ -22,6 +22,34 @@
     (f' 1) => 2.218281828459045
     (f' 2) => 7.18905609893065))
 
+(facts "Derivatives with a square root"
+  (let [f (fn [x] (dsqrt x))
+        f' (derivative-F f)]
+    (f' 0) => (throws java.lang.ArithmeticException "Divide by zero")
+    (f' 1) => (roughly 1/2)
+    (f' 2) => 0.35355339059327373
+    (f' 4) => (roughly 1/4)))
+
+(facts "Derivatives of trigonometric functions"
+  (let [f (fn [x] (dsin x))
+        f' (derivative-F f)]
+    (f' 0) => 1.0
+    (f' (/ Math/PI 2)) => (roughly 0 0.00001)
+    (f' Math/PI) => -1.0)
+
+  (let [f (fn [x] (dcos x))
+        f' (derivative-F f)]
+    (f' 0) => 0.0
+    (f' (/ Math/PI 2)) => 1.0
+    (f' Math/PI) => (roughly 0.0 0.00001)
+    (f' (* 3 (/ Math/PI 2))) => -1.0)
+
+  (let [f (fn [x] (dtan x))
+        f' (derivative-F f)]
+    (f' 0) => 1.0
+    (f' Math/PI) => 1.0
+    (f' (/ Math/PI 2)) => 2.6670937881135714E32))
+
 (facts "Computing derivatives let's us solve easily using Newton's method"
   (let [f (fn [x] (d- (d- (dexp x) 1.5)
                      (datan x)))
@@ -32,8 +60,7 @@
                           (> steps 20)))
         next-guess (fn [{:keys [x last steps] :or {last 0
                                                   steps 0}}]
-                     (let [guess (- x (/ (f x)
-                                         (f' x)))]
+                     (let [guess (- x (/ (f x) (f' x)))]
                        {:steps (inc steps)
                         :error (- last guess)
                         :last x
