@@ -5,7 +5,7 @@ and initiall ported from [R6RS-AD](https://github.com/qobi/R6RS-AD).
 
 ## Usage
 
-An example where being able to compute a derivative let's us solve
+An example where being able to compute a derivative lets us solve
 easily using Newton's method. Here we're solving for `x`, where `e^x -
 1.5 = tan^{-1}(x)`. We do this by finding the root of `e^x - 1.5 -
 tan^{-1}(x) = 0`.
