@@ -135,14 +135,12 @@
     self))
 
 (defn lift-real-n->real [f df-dx1 df-dx2]
-  ;;(println "lift-real-n->real" "f:" f "df-dx1:" df-dx1 "df-dx2:" df-dx2)
   (fn [& xs]
     (if (nil? xs)
       (f)
       (reduce (lift-real*real->real f df-dx1 df-dx2) xs))))
 
 (defn lift-real-n+1->real [f df-dx df-dx1 df-dx2]
-  ;;(println "lift-real-n+1->real" "f:" f "df-dx:" df-dx "df-dx1:" df-dx1 "df-dx2:" df-dx2)
   (fn [& xs]
     (cond (nil? xs) (f)
           (nil? (rest xs)) ((lift-real->real f df-dx) (first xs))
@@ -154,7 +152,6 @@
         :else x))
 
 (defn lift-real-n->boolean [f]
-  ;;(println "lift-real-n->boolean f:" f)
   (fn [& xs] (apply f (map primal* xs))))
 
 (def d+ (lift-real-n->real clojure.core/+ (fn [x1 x2] 1) (fn [x1 x2] 1)))
@@ -211,17 +208,10 @@
 
 (defn forward-mode [map-independent map-dependent f x x-perturbation]
   ;; Based on R6RS-ad, thus doesn't support tangent vector mode
-  ;;(println "forward-mode")
-  ;;(println "-- map-independent" map-independent)
-  ;;(println "-- map-dependent" map-dependent)
-  ;;(println "-- f" f)
-  ;;(println "-- x" x)
-  ;;(println "-- x-perturbation" x-perturbation)
   (swap! e inc)
   (let [y-forward (f (map-independent (fn [x x-perturbation] (DualNumber. @e x x-perturbation))
                                       x
                                       x-perturbation))]
-    ;;(println "y-forward" y-forward)
     (swap! e dec)
     [(map-dependent (fn [y-forward]
                       (if (or (not (dual-number? y-forward))
@@ -238,13 +228,8 @@
 
 (defn derivative-F [f]
   (fn [x]
-    ;;(println "deriv-f fn")
-    (second (forward-mode (fn [f x x-perturbation]
-                            ;;(println "map-independent" f x x-perturbation)
-                            (f x x-perturbation))
-                          (fn [f y-forward]
-                            ;;(println "map-dependent" f y-forward)
-                            (f y-forward))
+    (second (forward-mode (fn [f x x-perturbation] (f x x-perturbation))
+                          (fn [f y-forward] (f y-forward))
                           f x 1))))
 
 (defn directional-derivative-list-F [f]
