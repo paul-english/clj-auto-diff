@@ -5,6 +5,10 @@ and initiall ported from [R6RS-AD](https://github.com/qobi/R6RS-AD).
 
 ## Usage
 
+Include it in your project using clojars,
+
+    [clj-auto-diff "0.1.0"]
+
 An example where being able to compute a derivative lets us solve
 easily using Newton's method. Here we're solving for `x`, where `e^x -
 1.5 = tan^{-1}(x)`. We do this by finding the root of `e^x - 1.5 -
