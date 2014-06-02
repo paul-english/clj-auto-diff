@@ -14,6 +14,7 @@ easily using Newton's method. Here we're solving for `x`, where `e^x -
 1.5 = tan^{-1}(x)`. We do this by finding the root of `e^x - 1.5 -
 tan^{-1}(x) = 0`.
 
+```clojure
     (let [f (fn [x] (d- (d- (dexp x) 1.5)
                        (datan x)))
           f' (derivative-F f)
@@ -36,6 +37,7 @@ tan^{-1}(x) = 0`.
           :last -14.101269772739967
           :steps 7
           :x -14.101269772739967})
+```
 
 ## License
 
