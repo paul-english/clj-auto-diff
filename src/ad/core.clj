@@ -157,11 +157,11 @@
   ;;(println "lift-real-n->boolean f:" f)
   (fn [& xs] (apply f (map primal* xs))))
 
-(def d+ (lift-real-n->real + (fn [x1 x2] 1) (fn [x1 x2] 1)))
+(def d+ (lift-real-n->real clojure.core/+ (fn [x1 x2] 1) (fn [x1 x2] 1)))
 
-(def d- (lift-real-n+1->real - (fn [x] -1) (fn [x1 x2] 1) (fn [x1 x2] -1)))
+(def d- (lift-real-n+1->real clojure.core/- (fn [x] -1) (fn [x1 x2] 1) (fn [x1 x2] -1)))
 
-(def d* (lift-real-n->real * (fn [x1 x2] x2) (fn [x1 x2] x1)))
+(def d* (lift-real-n->real clojure.core/* (fn [x1 x2] x2) (fn [x1 x2] x1)))
 
 (def ddiv (lift-real-n+1->real
          /
@@ -186,23 +186,23 @@
 
 (def datan (lift-real->real #(Math/atan %) (fn [x] (ddiv 1 (d+ 1 (d* x x))))))
 
-(def d= (lift-real-n->boolean =))
+(def d= (lift-real-n->boolean clojure.core/=))
 
-(def d< (lift-real-n->boolean <))
+(def d< (lift-real-n->boolean clojure.core/<))
 
-(def d> (lift-real-n->boolean >))
+(def d> (lift-real-n->boolean clojure.core/>))
 
-(def d<= (lift-real-n->boolean <=))
+(def d<= (lift-real-n->boolean clojure.core/<=))
 
-(def d>= (lift-real-n->boolean >=))
+(def d>= (lift-real-n->boolean clojure.core/>=))
 
-(def dzero? (lift-real-n->boolean zero?))
+(def dzero? (lift-real-n->boolean clojure.core/zero?))
 
-(def dpositive? (lift-real-n->boolean pos?))
+(def dpositive? (lift-real-n->boolean clojure.core/pos?))
 
-(def dnegative? (lift-real-n->boolean neg?))
+(def dnegative? (lift-real-n->boolean clojure.core/neg?))
 
-(def dreal? (lift-real-n->boolean number?))
+(def dreal? (lift-real-n->boolean clojure.core/number?))
 
 (defn write-real [x]
   (cond (dual-number? x) (do (write-real (.primal x)) x)
