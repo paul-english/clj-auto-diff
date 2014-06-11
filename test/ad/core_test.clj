@@ -1,4 +1,5 @@
 (ns ad.core-test
+  (:refer-clojure :exclude [* + - / = < > <= >= zero?])
   (:use midje.sweet)
   (:require [ad.core :refer :all]))
 
@@ -6,7 +7,7 @@
 
   ;; f(x) = x^2
   ;; f'(x)= 2*x
-  (let [f (fn [x] (d* x x))
+  (let [f (fn [x] (* x x))
         f' (derivative-F f)]
     (f' 0) => 0
     (f' 2) => 4
@@ -14,16 +15,17 @@
 
   ;; f(x) = e^x - 1.5 - atan(x)
   ;; f'(x) = e^x - 1/(1 + x^2)
-  ;; TODO multiple arguments for d-, d+, d*, etc...
-  (let [f (fn [x] (d- (d- (dexp x) 1.5)
-                     (datan x)))
+  ;; NOTE multiple arguments aren't yet supported, e.g. having to nest
+  ;; subtraction below
+  (let [f (fn [x] (- (- (exp x) 1.5)
+                     (atan x)))
         f' (derivative-F f)]
     (f' 0) => 0.0
     (f' 1) => 2.218281828459045
     (f' 2) => 7.18905609893065))
 
 (facts "Derivatives with a square root"
-  (let [f (fn [x] (dsqrt x))
+  (let [f (fn [x] (sqrt x))
         f' (derivative-F f)]
     (f' 0) => (throws java.lang.ArithmeticException "Divide by zero")
     (f' 1) => (roughly 1/2)
@@ -31,20 +33,20 @@
     (f' 4) => (roughly 1/4)))
 
 (facts "Derivatives of trigonometric functions"
-  (let [f (fn [x] (dsin x))
+  (let [f (fn [x] (sin x))
         f' (derivative-F f)]
     (f' 0) => 1.0
     (f' (/ Math/PI 2)) => (roughly 0 0.00001)
     (f' Math/PI) => -1.0)
 
-  (let [f (fn [x] (dcos x))
+  (let [f (fn [x] (cos x))
         f' (derivative-F f)]
     (f' 0) => 0.0
     (f' (/ Math/PI 2)) => 1.0
     (f' Math/PI) => (roughly 0.0 0.00001)
     (f' (* 3 (/ Math/PI 2))) => -1.0)
 
-  (let [f (fn [x] (dtan x))
+  (let [f (fn [x] (tan x))
         f' (derivative-F f)]
     (f' 0) => 1.0
     (f' Math/PI) => 1.0
@@ -59,8 +61,8 @@
 (future-fact "Imaginary numbers")
 
 (facts "Computing derivatives let's us solve easily using Newton's method"
-  (let [f (fn [x] (d- (d- (dexp x) 1.5)
-                     (datan x)))
+  (let [f (fn [x] (- (- (exp x) 1.5)
+                     (atan x)))
         f' (derivative-F f)
         convergent? (fn [{:keys [steps error] :or {steps 0
                                                   error 1}}]
@@ -84,14 +86,14 @@
 (facts "gradients"
   ;; f(x,y) = x^2 + y
   ;; \del f(x,y) = [2*x, 1]
-  (let [f (fn [x] (d+ (d* (nth x 0) (nth x 0))
-                     (nth x 1)))
+  (let [f (fn [x] (+ (* (nth x 0) (nth x 0))
+                    (nth x 1)))
         f' (gradient-vector-F f)]
     (f' [2 3]) => [4 1]
     (f' [6 9]) => [12 1])
 
-  (let [f (fn [x] (d+ (d* (nth x 0) (nth x 0))
-                     (dsin (nth x 1))))
+  (let [f (fn [x] (+ (* (nth x 0) (nth x 0))
+                    (sin (nth x 1))))
         f' (gradient-vector-F f)]
     (f' [2 3]) => [4 -0.9899924966004454]
     (f' [6 9]) => [12 -0.9111302618846769]))

@@ -35,14 +35,14 @@
 (defn tapify [x]
   (new-tape @e x '[] '[]))
 
-(declare d* d+ dcos)
+(declare * + cos)
 
 (defn lift-real->real [f df-dx]
   (letfn [(self [x]
             (cond
              (dual-number? x) (DualNumber. (.epsilon x)
                                            (self (.primal x))
-                                           (d* (df-dx (.primal x))
+                                           (* (df-dx (.primal x))
                                                (.perturbation x)))
              (tape? x) (new-tape (.epsilon x)
                                  (self (.primal x))
@@ -67,35 +67,35 @@
 
                    [:dual :dual :<] (DualNumber. (.epsilon x2)
                                                  (self x1 (.primal x2))
-                                                 (d* (df-dx2 x1 (.primal x2))
-                                                     (.perturbation x2)))
+                                                 (* (df-dx2 x1 (.primal x2))
+                                                    (.perturbation x2)))
                    [:dual :dual :>] (DualNumber. (.epsilon x1)
                                                  (self (.primal x1) x2)
-                                                 (d* (df-dx1 (.primal x1) x2)
-                                                     (.perturbation x1)))
+                                                 (* (df-dx1 (.primal x1) x2)
+                                                    (.perturbation x1)))
                    [:dual :dual _] (DualNumber. (.epsilon x1)
                                                 (self (.primal x1) (.primal x2))
-                                                (d+ (d* (df-dx1 (.primal x1)
-                                                                (.primal x2))
-                                                        (.perturbation x1))
-                                                    (d* (df-dx2 (.primal x1)
-                                                                (.primal x2))
-                                                        (.perturbation x2))))
+                                                (+ (* (df-dx1 (.primal x1)
+                                                              (.primal x2))
+                                                      (.perturbation x1))
+                                                   (* (df-dx2 (.primal x1)
+                                                              (.primal x2))
+                                                      (.perturbation x2))))
                    [:dual :tape :<] (new-tape (.epsilon x2)
                                               (self x1 (.primal x2))
                                               [(df-dx2 x1 (.primal x2))]
                                               [x2])
                    [:dual :tape :>] (DualNumber. (.epsilon x1)
                                                  (self (.primal x1) x2)
-                                                 (d* (df-dx1 (.primal x1) x2)
+                                                 (* (df-dx1 (.primal x1) x2)
                                                      (.perturbation x1)))
                    [:dual _ _] (DualNumber. (.epsilon x1)
                                             (self (.primal x1) x2)
-                                            (d* (df-dx1 (.primal x1) x2)
+                                            (* (df-dx1 (.primal x1) x2)
                                                 (.perturbation x1)))
                    [:tape :dual :<] (DualNumber. (.epsilon x2)
                                                  (self x1 (.primal x2))
-                                                 (d* (df-dx2 x1 (.primal x2))
+                                                 (* (df-dx2 x1 (.primal x2))
                                                      (.perturbation x2)))
                    [:tape :dual :>] (new-tape (.epsilon x1)
                                               (self (.primal x1) x2)
@@ -120,7 +120,7 @@
                                          [x1])
                    [_ :dual _] (DualNumber. (.epsilon x2)
                                             (self x1 (.primal x2))
-                                            (d* (df-dx2 x1 (.primal x2))
+                                            (* (df-dx2 x1 (.primal x2))
                                                 (.perturbation x2)))
                    [_ :tape _] (new-tape (.epsilon x2)
                                          (self x1 (.primal x2))
@@ -149,54 +149,54 @@
 (defn lift-real-n->boolean [f]
   (fn [& xs] (apply f (map primal* xs))))
 
-(def d+ (lift-real-n->real clojure.core/+ (fn [x1 x2] 1) (fn [x1 x2] 1)))
+(def + (lift-real-n->real clojure.core/+ (fn [x1 x2] 1) (fn [x1 x2] 1)))
 
-(def d- (lift-real-n+1->real clojure.core/- (fn [x] -1) (fn [x1 x2] 1) (fn [x1 x2] -1)))
+(def - (lift-real-n+1->real clojure.core/- (fn [x] -1) (fn [x1 x2] 1) (fn [x1 x2] -1)))
 
-(def d* (lift-real-n->real clojure.core/* (fn [x1 x2] x2) (fn [x1 x2] x1)))
+(def * (lift-real-n->real clojure.core/* (fn [x1 x2] x2) (fn [x1 x2] x1)))
 
-(def ddiv (lift-real-n+1->real
-         /
-         (fn [x] (d- (ddiv (d* x x))))
-         (fn [x1 x2] (ddiv x2))
-         (fn [x1 x2] (d- (ddiv x1 (d* x2 x2))))))
+(def / (lift-real-n+1->real
+         clojure.core//
+         (fn [x] (- (/ (* x x))))
+         (fn [x1 x2] (/ x2))
+         (fn [x1 x2] (- (/ x1 (* x2 x2))))))
 
-(def dsqrt (lift-real->real #(Math/sqrt %) (fn [x] (ddiv 1 (d* 2 (dsqrt x))))))
+(def sqrt (lift-real->real #(Math/sqrt %) (fn [x] (/ 1 (* 2 (sqrt x))))))
 
-(def dexp (lift-real->real #(Math/exp %) (fn [x] (dexp x))))
+(def exp (lift-real->real #(Math/exp %) (fn [x] (exp x))))
 
-(def dlog (lift-real->real #(Math/log %) (fn [x] (ddiv x))))
+(def log (lift-real->real #(Math/log %) (fn [x] (/ x))))
 
-(def dexpt
+(def expt
   (lift-real*real->real #(Math/pow %1 %2)
-                        (fn [x1 x2] (d* x2 (dexpt x1 (d- x2 1))))
-                        (fn [x1 x2] (d* (dlog x1) (dexpt x1 x2)))))
+                        (fn [x1 x2] (* x2 (expt x1 (- x2 1))))
+                        (fn [x1 x2] (* (log x1) (expt x1 x2)))))
 
-(def dsin (lift-real->real #(Math/sin %) (fn [x] (dcos x))))
+(def sin (lift-real->real #(Math/sin %) (fn [x] (cos x))))
 
-(def dcos (lift-real->real #(Math/cos %) (fn [x] (d- (dsin x)))))
+(def cos (lift-real->real #(Math/cos %) (fn [x] (- (sin x)))))
 
-(def dtan (lift-real->real #(Math/tan %) (fn [x] (d+ 1 (dexpt (dtan x) 2)))))
+(def tan (lift-real->real #(Math/tan %) (fn [x] (+ 1 (expt (tan x) 2)))))
 
-(def datan (lift-real->real #(Math/atan %) (fn [x] (ddiv 1 (d+ 1 (d* x x))))))
+(def atan (lift-real->real #(Math/atan %) (fn [x] (/ 1 (+ 1 (* x x))))))
 
-(def d= (lift-real-n->boolean clojure.core/=))
+(def = (lift-real-n->boolean clojure.core/=))
 
-(def d< (lift-real-n->boolean clojure.core/<))
+(def < (lift-real-n->boolean clojure.core/<))
 
-(def d> (lift-real-n->boolean clojure.core/>))
+(def > (lift-real-n->boolean clojure.core/>))
 
-(def d<= (lift-real-n->boolean clojure.core/<=))
+(def <= (lift-real-n->boolean clojure.core/<=))
 
-(def d>= (lift-real-n->boolean clojure.core/>=))
+(def >= (lift-real-n->boolean clojure.core/>=))
 
-(def dzero? (lift-real-n->boolean clojure.core/zero?))
+(def zero? (lift-real-n->boolean clojure.core/zero?))
 
-(def dpositive? (lift-real-n->boolean clojure.core/pos?))
+(def positive? (lift-real-n->boolean clojure.core/pos?))
 
-(def dnegative? (lift-real-n->boolean clojure.core/neg?))
+(def negative? (lift-real-n->boolean clojure.core/neg?))
 
-(def dreal? (lift-real-n->boolean clojure.core/number?))
+(def real? (lift-real-n->boolean clojure.core/number?))
 
 (defn write-real [x]
   (cond (dual-number? x) (do (write-real (.primal x)) x)
@@ -303,12 +303,12 @@
     (map initialize-sensitivity! (.tapes tape))))
 
 (defn reverse-phase! [sensitivity tape]
-  (.setSensitivity tape (d+ (.sensitivity tape) sensitivity))
+  (.setSensitivity tape (+ (.sensitivity tape) sensitivity))
   (.setFanout tape (- (.fanout tape) 1))
   (when (zero? (.fanout tape))
     (let [sensitivity (.sensitivity tape)]
       (map
-       (fn [factor tape] (reverse-phase! (d* sensitivity factor) tape))
+       (fn [factor tape] (reverse-phase! (* sensitivity factor) tape))
        (.factors tape)
        (.tapes tape)))))
 
