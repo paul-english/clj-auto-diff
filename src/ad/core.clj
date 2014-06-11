@@ -223,7 +223,7 @@
                         (.perturbation y-forward)))
                     y-forward)]))
 
-(defn derivative-F [f]
+(defn diff [f]
   (fn [x]
     (second (forward-mode (fn [f x x-perturbation] (f x x-perturbation))
                           (fn [f y-forward] (f y-forward))
@@ -277,7 +277,7 @@
   (fn [x]
     (map-n
      (fn [i]
-       ((derivative-F (fn [xi] (f (replace-ith x i xi)))) (nth x i)))
+       ((diff (fn [xi] (f (replace-ith x i xi)))) (nth x i)))
      (count x))))
 
 (defn replace-ith-vector [x i xi]
@@ -287,7 +287,7 @@
 (defn gradient-vector-F [f]
   (fn [x]
     (map (fn [i]
-           ((derivative-F (fn [xi] (f (replace-ith-vector x i xi))))
+           ((diff (fn [xi] (f (replace-ith-vector x i xi))))
             (nth x i)))
          (range (count x)))))
 

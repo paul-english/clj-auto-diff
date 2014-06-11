@@ -8,7 +8,7 @@
   ;; f(x) = x^2
   ;; f'(x)= 2*x
   (let [f (fn [x] (* x x))
-        f' (derivative-F f)]
+        f' (diff f)]
     (f' 0) => 0
     (f' 2) => 4
     (f' 4) => 8)
@@ -19,14 +19,14 @@
   ;; subtraction below
   (let [f (fn [x] (- (- (exp x) 1.5)
                      (atan x)))
-        f' (derivative-F f)]
+        f' (diff f)]
     (f' 0) => 0.0
     (f' 1) => 2.218281828459045
     (f' 2) => 7.18905609893065))
 
 (facts "Derivatives with a square root"
   (let [f (fn [x] (sqrt x))
-        f' (derivative-F f)]
+        f' (diff f)]
     (f' 0) => (throws java.lang.ArithmeticException "Divide by zero")
     (f' 1) => (roughly 1/2)
     (f' 2) => 0.35355339059327373
@@ -34,20 +34,20 @@
 
 (facts "Derivatives of trigonometric functions"
   (let [f (fn [x] (sin x))
-        f' (derivative-F f)]
+        f' (diff f)]
     (f' 0) => 1.0
     (f' (/ Math/PI 2)) => (roughly 0 0.00001)
     (f' Math/PI) => -1.0)
 
   (let [f (fn [x] (cos x))
-        f' (derivative-F f)]
+        f' (diff f)]
     (f' 0) => 0.0
     (f' (/ Math/PI 2)) => 1.0
     (f' Math/PI) => (roughly 0.0 0.00001)
     (f' (* 3 (/ Math/PI 2))) => -1.0)
 
   (let [f (fn [x] (tan x))
-        f' (derivative-F f)]
+        f' (diff f)]
     (f' 0) => 1.0
     (f' Math/PI) => 1.0
     (f' (/ Math/PI 2)) => 2.6670937881135714E32)
@@ -63,7 +63,7 @@
 (facts "Computing derivatives let's us solve easily using Newton's method"
   (let [f (fn [x] (- (- (exp x) 1.5)
                      (atan x)))
-        f' (derivative-F f)
+        f' (diff f)
         convergent? (fn [{:keys [steps error] :or {steps 0
                                                   error 1}}]
                       (or (< error 0.00001)
