@@ -48,7 +48,15 @@
         f' (derivative-F f)]
     (f' 0) => 1.0
     (f' Math/PI) => 1.0
-    (f' (/ Math/PI 2)) => 2.6670937881135714E32))
+    (f' (/ Math/PI 2)) => 2.6670937881135714E32)
+  (future-fact "#'log")
+  (future-fact "#'exp")
+  (future-fact "#'pow")
+  (future-fact "#'asin")
+  (future-fact "#'acos")
+  (future-fact "hyperbolic functions"))
+
+(future-fact "Imaginary numbers")
 
 (facts "Computing derivatives let's us solve easily using Newton's method"
   (let [f (fn [x] (d- (d- (dexp x) 1.5)

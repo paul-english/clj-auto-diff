@@ -1,9 +1,5 @@
-(ns ad.core)
-
-;; TODO we'll want this to work with core.matrix somehow...
-;; that could get complex fast....
-;; dealing with the dualnumber & tape types will make
-;; matrices tough to do.
+(ns ad.core
+  (:require [clojure.core.match :refer [match]]))
 
 ;; There should be a way to do this without the mutable state here.
 ;; This is just how it was done in the scheme lib.
@@ -42,7 +38,6 @@
 (declare d* d+ dcos)
 
 (defn lift-real->real [f df-dx]
-  ;;(println "lift-real->real" "f:" f "df-dx:" df-dx)
   (letfn [(self [x]
             (cond
              (dual-number? x) (DualNumber. (.epsilon x)
@@ -57,81 +52,81 @@
     self))
 
 (defn lift-real*real->real [f df-dx1 df-dx2]
-  ;;(println "lift-real*real->real" "f:" f "df-dx1:" df-dx1 "df-dx2:" df-dx2)
   (letfn [(self [x1 x2]
-            ;;(println "-- self" x1 x2)
-            ;;(println "self x1" (dual-number? x1) (tape? x1))
-            ;;(println "self x2" (dual-number? x2) (tape? x2))
-            (cond
-             (dual-number? x1) (cond
-                                (dual-number? x2) (cond
-                                                   (<_e (.epsilon x1) (.epsilon x2)) (DualNumber. (.epsilon x2)
-                                                                                                  (self x1 (.primal x2))
-                                                                                                  (d* (df-dx2 x1 (.primal x2))
-                                                                                                      (.perturbation x2)))
-                                                   (<_e (.epsilon x2) (.epsilon x1)) (DualNumber. (.epsilon x1)
-                                                                                                  (self (.primal x1) x2)
-                                                                                                  (d* (df-dx1 (.primal x1) x2)
-                                                                                                      (.perturbation x1)))
-                                                   :else (DualNumber. (.epsilon x1)
-                                                                      (self (.primal x1) (.primal x2))
-                                                                      (d+ (d* (df-dx1 (.primal x1)
-                                                                                      (.primal x2))
-                                                                              (.perturbation x1))
-                                                                          (d* (df-dx2 (.primal x1)
-                                                                                      (.primal x2))
-                                                                              (.perturbation x2)))))
-                                (tape? x2) (if (<_e (.epsilon x1) (.epsilon x2))
-                                             (new-tape (.epsilon x2)
-                                                       (self x1 (.primal x2))
-                                                       [(df-dx2 x1 (.primal x2))]
-                                                       [x2])
-                                             (DualNumber. (.epsilon x1)
-                                                          (self (.primal x1) x2)
-                                                          (d* (df-dx1 (.primal x1) x2)
-                                                              (.perturbation x1))))
-                                :else (DualNumber. (.epsilon x1)
-                                                   (self (.primal x1) x2)
-                                                   (d* (df-dx1 (.primal x1) x2)
-                                                       (.perturbation x1))))
-             (tape? x1) (cond
-                         (dual-number? x2) (if (<_e (.epsilon x1) (.epsilon x2))
-                                             (DualNumber. (.epsilon x2)
-                                                          (self x1 (.primal x2))
-                                                          (d* (df-dx2 x1 (.primal x2))
-                                                              (.perturbation x2)))
-                                             (new-tape (.epsilon x1)
-                                                       (self (.primal x1) x2)
-                                                       [(df-dx1 (.primal x1) x2)]
-                                                       [x1]))
-                         (tape? x2) (cond
-                                     (<_e (.epsilon x1) (.epsilon x2)) (new-tape (.epsilon x2)
-                                                                                 (self x1 (.primal x2))
-                                                                                 [(df-dx2 x1 (.primal x2))]
-                                                                                 [x2])
-                                     (<_e (.epsilon x2) (.epsilon x1)) (new-tape (.epsilon x1)
-                                                                                 (self (.primal x1) x2)
-                                                                                 [(df-dx1 (.primal x1) x2)]
-                                                                                 [x1])
-                                     :else (new-tape (.epsilon x1)
-                                                     (self (.primal x1) (.primal x2))
-                                                     [(df-dx1 (.primal x1) (.primal x2))
-                                                      (df-dx2 (.primal x1) (.primal x2))]
-                                                     [x1 x2]))
-                         :else (new-tape (.epsilon x1)
+            (match [(cond (dual-number? x1) :dual
+                          (tape? x1) :tape
+                          :else nil)
+                    (cond (dual-number? x2) :dual
+                          (tape? x2) :tape
+                          :else nil)
+                    (try (cond (<_e (.epsilon x1) (.epsilon x2)) :<
+                               (<_e (.epsilon x2) (.epsilon x1)) :>
+                               :else nil)
+                         (catch Exception e
+                           nil))]
+
+                   [:dual :dual :<] (DualNumber. (.epsilon x2)
+                                                 (self x1 (.primal x2))
+                                                 (d* (df-dx2 x1 (.primal x2))
+                                                     (.perturbation x2)))
+                   [:dual :dual :>] (DualNumber. (.epsilon x1)
+                                                 (self (.primal x1) x2)
+                                                 (d* (df-dx1 (.primal x1) x2)
+                                                     (.perturbation x1)))
+                   [:dual :dual _] (DualNumber. (.epsilon x1)
+                                                (self (.primal x1) (.primal x2))
+                                                (d+ (d* (df-dx1 (.primal x1)
+                                                                (.primal x2))
+                                                        (.perturbation x1))
+                                                    (d* (df-dx2 (.primal x1)
+                                                                (.primal x2))
+                                                        (.perturbation x2))))
+                   [:dual :tape :<] (new-tape (.epsilon x2)
+                                              (self x1 (.primal x2))
+                                              [(df-dx2 x1 (.primal x2))]
+                                              [x2])
+                   [:dual :tape :>] (DualNumber. (.epsilon x1)
+                                                 (self (.primal x1) x2)
+                                                 (d* (df-dx1 (.primal x1) x2)
+                                                     (.perturbation x1)))
+                   [:dual _ _] (DualNumber. (.epsilon x1)
+                                            (self (.primal x1) x2)
+                                            (d* (df-dx1 (.primal x1) x2)
+                                                (.perturbation x1)))
+                   [:tape :dual :<] (DualNumber. (.epsilon x2)
+                                                 (self x1 (.primal x2))
+                                                 (d* (df-dx2 x1 (.primal x2))
+                                                     (.perturbation x2)))
+                   [:tape :dual :>] (new-tape (.epsilon x1)
+                                              (self (.primal x1) x2)
+                                              [(df-dx1 (.primal x1) x2)]
+                                              [x1])
+                   [:tape :tape :<] (new-tape (.epsilon x2)
+                                              (self x1 (.primal x2))
+                                              [(df-dx2 x1 (.primal x2))]
+                                              [x2])
+                   [:tape :tape :>] (new-tape (.epsilon x1)
+                                              (self (.primal x1) x2)
+                                              [(df-dx1 (.primal x1) x2)]
+                                              [x1])
+                   [:tape :tape _] (new-tape (.epsilon x1)
+                                             (self (.primal x1) (.primal x2))
+                                             [(df-dx1 (.primal x1) (.primal x2))
+                                              (df-dx2 (.primal x1) (.primal x2))]
+                                             [x1 x2])
+                   [:tape _ _] (new-tape (.epsilon x1)
                                          (self (.primal x1) x2)
                                          [(df-dx1 (.primal x1) x2)]
-                                         [x1]))
-             :else (cond
-                    (dual-number? x2) (DualNumber. (.epsilon x2)
-                                                   (self x1 (.primal x2))
-                                                   (d* (df-dx2 x1 (.primal x2))
-                                                       (.perturbation x2)))
-                    (tape? x2) (new-tape (.epsilon x2)
+                                         [x1])
+                   [_ :dual _] (DualNumber. (.epsilon x2)
+                                            (self x1 (.primal x2))
+                                            (d* (df-dx2 x1 (.primal x2))
+                                                (.perturbation x2)))
+                   [_ :tape _] (new-tape (.epsilon x2)
                                          (self x1 (.primal x2))
                                          [(df-dx2 x1 (.primal x2))]
                                          [x2])
-                    :else (f x1 x2))))]
+                   [_ _ _] (f x1 x2)))]
     self))
 
 (defn lift-real-n->real [f df-dx1 df-dx2]
