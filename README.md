@@ -15,9 +15,9 @@ easily using Newton's method. Here we're solving for `x`, where `e^x -
 tan^{-1}(x) = 0`.
 
 ```clojure
-(let [f (fn [x] (d- (d- (dexp x) 1.5)
-                   (datan x)))
-      f' (derivative-F f)
+(let [f (fn [x] (- (- (exp x) 1.5)
+                   (atan x)))
+      f' (diff f)
       convergent? (fn [{:keys [steps error] :or {steps 0
                                                 error 1}}]
                     (or (< error 0.00001)
