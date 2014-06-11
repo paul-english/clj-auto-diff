@@ -1,4 +1,4 @@
-(defproject clj-auto-diff "0.1.0"
+(defproject clj-auto-diff "0.1.3"
   :description "Automatic differentiation library"
   :url "http://github.com/log0ymxm/clj-auto-diff"
   :license {:name "Eclipse Public License"

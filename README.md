@@ -7,7 +7,7 @@ and initiall ported from [R6RS-AD](https://github.com/qobi/R6RS-AD).
 
 Include it in your project using clojars,
 
-    [clj-auto-diff "0.1.0"]
+    [clj-auto-diff "0.1.3"]
 
 An example where being able to compute a derivative lets us solve
 easily using Newton's method. Here we're solving for `x`, where `e^x -
