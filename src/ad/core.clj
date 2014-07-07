@@ -271,7 +271,7 @@
          i 0]
     (if (= i n) (reverse result) (recur (cons (f i) result) (+ i 1)))))
 
-(defn gradien-list-F [f]
+(defn gradient-list-F [f]
   (fn [x]
     (map-n
      (fn [i]
