@@ -5,8 +5,6 @@
 ;; This is just how it was done in the scheme lib.
 (def e (atom 0))
 
-(def <_e <)
-
 (deftype DualNumber [epsilon primal perturbation])
 
 (definterface ITape
@@ -59,8 +57,8 @@
                     (cond (dual-number? x2) :dual
                           (tape? x2) :tape
                           :else nil)
-                    (try (cond (<_e (.epsilon x1) (.epsilon x2)) :<
-                               (<_e (.epsilon x2) (.epsilon x1)) :>
+                    (try (cond (< (.epsilon x1) (.epsilon x2)) :<
+                               (< (.epsilon x2) (.epsilon x1)) :>
                                :else nil)
                          (catch Exception e
                            nil))]
@@ -212,13 +210,13 @@
     (swap! e dec)
     [(map-dependent (fn [y-forward]
                       (if (or (not (dual-number? y-forward))
-                              (<_e (.epsilon y-forward) @e))
+                              (< (.epsilon y-forward) @e))
                         y-forward
                         (.primal y-forward)))
                     y-forward)
      (map-dependent (fn [y-forward]
                       (if (or (not (dual-number? y-forward))
-                              (<_e (.epsilon y-forward) @e))
+                              (< (.epsilon y-forward) @e))
                         0
                         (.perturbation y-forward)))
                     y-forward)]))
@@ -329,14 +327,14 @@
                                (for-each-dependent1!
                                 (fn [y-reverse]
                                   (when (and (tape? y-reverse)
-                                             (not (<_e (.epsilon y-reverse) @e)))
+                                             (not (< (.epsilon y-reverse) @e)))
                                     (determine-fanout! y-reverse)
                                     (initialize-sensitivity! y-reverse)))
                                 y-reverse)
                                (for-each-dependent2!
                                 (fn [y-reverse y-sensitivity]
                                   (when (and (tape? y-reverse)
-                                             (not (<_e (.epsilon y-reverse) @e)))
+                                             (not (< (.epsilon y-reverse) @e)))
                                     (determine-fanout! y-reverse)
                                     (reverse-phase! y-sensitivity y-reverse)))
                                 y-reverse
@@ -346,7 +344,7 @@
     (swap! e dec)
     [(map-dependent
       (fn [y-reverse]
-        (if (or (not (tape? y-reverse)) (<_e (.epsilon y-reverse) @e))
+        (if (or (not (tape? y-reverse)) (< (.epsilon y-reverse) @e))
           y-reverse
           (.primal y-reverse)))
       y-reverse)
