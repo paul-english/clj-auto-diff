@@ -41,7 +41,4 @@ tan^{-1}(x) = 0`.
 
 ## License
 
-Copyright © 2014 Paul English
-
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+This library is a port of [R6RS-AD](https://github.com/qobi/R6RS-AD) which was originally licensed GPL, but permission has been given by the original author to publish this under the MIT license.
